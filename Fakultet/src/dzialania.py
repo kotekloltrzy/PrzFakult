@@ -236,6 +236,7 @@ def uruchom():
             if dane_dzialki[4] is True:
                 dane_drzew = podaj_dane_drzew()
         elif wybor == "3":
+            koszt_calkowity = 0
             if dom is None:
                 print("Najpierw podaj dane domu!")
                 input("Aby wrócić do menu wciśnij Enter")
@@ -245,14 +246,20 @@ def uruchom():
             else:
                 print("koszt całkowity fundamentów: ", round(koszt_fundamentow(
                     dom.dlugosc, dom.szerokosc, cennik_materialow, dzialka.rodzaj_gleby, dom.piwnica), 2), "zł")
-                print("Całkowity koszt przygotowania działki: ", dzialka.koszt_przygotowania_pod_budowe(
-                    dane_plotu, dane_drzew), "zł\n")
+                koszt_calkowity += round(koszt_fundamentow(dom.dlugosc, dom.szerokosc, cennik_materialow, dzialka.rodzaj_gleby, dom.piwnica), 2)
+                print("Całkowity koszt przygotowania działki: ", round(dzialka.koszt_przygotowania_pod_budowe(
+                    dane_plotu, dane_drzew), 2), "zł\n")
+                koszt_calkowity += round(dzialka.koszt_przygotowania_pod_budowe(dane_plotu, dane_drzew), 2)
                 if dom.garaz is True:
                     print("Koszt budowy garażu: ", garaz.koszt(), "zł")
+                    koszt_calkowity += garaz.koszt()
                 if dom.piwnica is True:
                     print("Koszt budowy piwnicy: ", piwnica.koszt(), "zł")
+                    koszt_calkowity += piwnica.koszt()
                 if dom.poddasze is True:
                     print("Koszt budowy poddasza: ", poddasze.koszt(), "zł")
+                    koszt_calkowity += poddasze.koszt()
+                print("Koszt całkowity: ", koszt_calkowity, "zł")
                 wyjdz = input("\nAby wrócić do menu wciśnij Enter\nAby wyjść z aplikacji podaj: 0\nInput: ")
                 if wyjdz == "0":
                     break
