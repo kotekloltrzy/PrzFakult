@@ -9,12 +9,12 @@ from src.dzialania import (
 )
 
 
-def pobierz_liczbe(tekst):
+def pobierz_liczbe(tekst, x):
     while True:
         try:
             liczba = float(input(tekst))
-            if liczba <= 0:
-                print("Wartość musi być większa od 0!")
+            if liczba <= x:
+                print(f"Wartość musi być większa od {x}!")
                 continue
             return liczba
         except ValueError:
@@ -96,9 +96,9 @@ def podaj_dane_drzew():
 
 def podaj_dane_domu():
     while True:
-        dlugosc = pobierz_liczbe("Podaj długość domu w metrach: ")
-        szerokosc = pobierz_liczbe("Podaj szerokość domu w metrach: ")
-        liczba_pieter = pobierz_liczbe("Podaj ile pięter ma mieć dom: ")
+        dlugosc = pobierz_liczbe("Podaj długość domu w metrach: ", 4)
+        szerokosc = pobierz_liczbe("Podaj szerokość domu w metrach: ", 4)
+        liczba_pieter = pobierz_liczbe_calkowita("Podaj ile pięter ma mieć dom: ")
         liczba_pokoi = pobierz_liczbe_calkowita(
             "Podaj ile pokoi ma być w domu (poza kuchnią i łązienką): "
         )
@@ -127,8 +127,8 @@ def podaj_dane_domu():
 
 def podaj_dane_dzialki():
     while True:
-        dlugosc = pobierz_liczbe("Podaj długość działki w metrach: ")
-        szerokosc = pobierz_liczbe("Podaj szerokość działki w metrach: ")
+        dlugosc = pobierz_liczbe("Podaj długość działki w metrach: ", 15)
+        szerokosc = pobierz_liczbe("Podaj szerokość działki w metrach: ", 15)
         ogrodzenie = pobierz_boolean("Podaj czy działka ma ogrodzenie: ")
         uzbrojenie = pobierz_boolean("Podaj czy działka jest uzbrojona: ")
         drzewa = pobierz_boolean("Podaj czy konieczna jest wycinka drzew: ")

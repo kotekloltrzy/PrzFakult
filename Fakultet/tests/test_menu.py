@@ -20,7 +20,7 @@ class TestPobierz:
     @pytest.mark.parametrize("wartosc", ["10", "15.5", "1"])
     def test_pobierz_liczbe_poprawnie(self, wartosc):
         with patch("builtins.input", return_value=wartosc):
-            wynik = pobierz_liczbe("test")
+            wynik = pobierz_liczbe("test", 0)
             assert wynik == float(wartosc)
 
     def test_pobierz_liczbe_niepoprawnie(self):
@@ -28,14 +28,14 @@ class TestPobierz:
             patch("builtins.input", side_effect=["abc", "-5", "0", "10"]),
             patch("builtins.print") as mock_print,
         ):
-            wynik = pobierz_liczbe("test")
+            wynik = pobierz_liczbe("test", 0)
             assert wynik == 10
             mock_print.assert_any_call("To nie jest liczba!")
             mock_print.assert_any_call("Wartość musi być większa od 0!")
 
     def test_pobierz_liczbe_minimalna(self):
         with patch("builtins.input", return_value="0.1"):
-            wynik = pobierz_liczbe("test")
+            wynik = pobierz_liczbe("test", 0)
             assert wynik == 0.1
 
     @pytest.mark.parametrize(
