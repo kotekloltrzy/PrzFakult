@@ -1,118 +1,23 @@
 import pytest
-from unittest.mock import patch
-from src.dzialania import (pobierz_liczbe, pobierz_liczbe_calkowita, pobierz_boolean, pobierz_string,
-                           koszt_wykopu, koszt_fundamentow, cennik_materialow, czas_budowy, podaj_dane_plotu,
-                           podaj_dane_drzew, podaj_dane_garazu, podaj_dane_poddasza, podaj_dane_piwnicy,
-                           podaj_dane_dzialki, podaj_dane_domu, uruchom)
-
-
-from src.dom import Dom, Garaz, Piwnica, Poddasze
-from src.dzialka import Dzialka
-
-
-class TestPobierz:
-    @pytest.mark.parametrize(
-        "wartosc",
-        ["10", "15.5", "1"]
-    )
-    def test_pobierz_liczbe_poprawnie(self, wartosc):
-        with patch("builtins.input", return_value=wartosc):
-            wynik = pobierz_liczbe("test")
-            assert wynik == float(wartosc)
-
-    def test_pobierz_liczbe_niepoprawnie(self):
-        with (
-            patch(
-                "builtins.input",
-                side_effect=["abc", "-5", "0", "10"]
-            ),
-            patch("builtins.print") as mock_print
-        ):
-            wynik = pobierz_liczbe("test")
-            assert wynik == 10
-            mock_print.assert_any_call("To nie jest liczba!")
-            mock_print.assert_any_call("Wartość musi być większa od 0!")
-
-    @pytest.mark.parametrize(
-        "wartosc, przewidywane",
-        [
-            ("Tak", True),
-            ("tak", True),
-            ("Nie", False),
-            ("nie", False),
-        ]
-    )
-    def test_pobierz_boolean_poprawnie(self, wartosc, przewidywane):
-        with patch("builtins.input", return_value=wartosc):
-            assert pobierz_boolean("test") is przewidywane
-
-    def test_pobierz_boolean_niepoprawnie(self):
-        with (
-            patch(
-                "builtins.input",
-                side_effect=["Jasne", "Nuh uh", "może", "tak"]
-            ),
-            patch("builtins.print") as mock_print
-        ):
-            wynik = pobierz_boolean("test")
-            assert wynik is True
-            mock_print.assert_any_call('Podaj "Tak" albo "Nie"!')
-
-    def test_pobierz_string_poprawnie(self):
-        with patch(
-            "builtins.input",
-            side_effect=["zly", "standardowy"]
-        ):
-            wynik = pobierz_string(
-                "test",
-                "standardowy",
-                "luksusowy"
-            )
-            assert wynik == "standardowy"
-
-    def test_pobierz_string_niepoprawnie(self):
-        with (
-            patch(
-                "builtins.input",
-                side_effect=[123, False, "", "123", "standardowy"]
-            ),
-            patch("builtins.print") as mock_print
-        ):
-            wynik = pobierz_string("test", "standardowy", "luksusowy")
-            assert wynik == "standardowy"
-            mock_print.assert_any_call(f'Podaj "standardowy" albo "luksusowy" !')
-
-    @pytest.mark.parametrize(
-        "wartosc",
-        ["1", "10", "100"]
-    )
-    def test_pobierz_liczbe_calkowita_poprawnie(self, wartosc):
-        with patch("builtins.input", return_value=wartosc):
-            wynik = pobierz_liczbe_calkowita("test")
-            assert wynik == int(wartosc)
-
-    def test_pobierz_liczbe_calkowita_niepoprawnie(self):
-        with (
-            patch(
-                "builtins.input",
-                side_effect=["-10", "0", "12.5", "10"]
-            ),
-            patch("builtins.print") as mock_print
-        ):
-            wynik = pobierz_liczbe_calkowita("test")
-            assert wynik == 10
-            mock_print.assert_any_call("To nie jest liczba całkowita!")
-            mock_print.assert_any_call("Wartość musi być większa od 0!")
+from unittest.mock import Mock
+from src.dzialania import (
+    koszt_wykopu,
+    koszt_fundamentow,
+    cennik_materialow,
+    czas_budowy,
+    koszt_domu,
+    koszt_dachu,
+    koszt_calkowity,
+    koszt_instalacji,
+    koszt_robocizny,
+)
+from src.klasy import Dom, Garaz, Piwnica, Poddasze, Dzialka
 
 
 class TestKosztWykopu:
     @pytest.mark.parametrize(
         "dlugosc, trudnosc, piwnica, przewidywane",
-        [
-            (100, 1.0, True, 26000),
-            (100, 1.0, False, 9750),
-            (50, 1.2, False, 5850)
-        ]
+        [(100, 1.0, True, 26000), (100, 1.0, False, 9750), (50, 1.2, False, 5850)],
     )
     def test_koszt_wykopu_poprawnie(self, dlugosc, trudnosc, piwnica, przewidywane):
         assert koszt_wykopu(dlugosc, trudnosc, piwnica) == przewidywane
@@ -122,128 +27,324 @@ class TestKosztWykopu:
         [
             (0, 1.0, True),
             (100, -5, False),
-        ]
+        ],
     )
     def test_koszt_wykopu_niepoprawnie(self, dlugosc, trudnosc, piwnica):
         with pytest.raises(ValueError):
             koszt_wykopu(dlugosc, trudnosc, piwnica)
+
+    def test_koszt_wykopu_minimalne_wartosci(self):
+        wynik = koszt_wykopu(0.1, 0.1, False)
+        assert wynik > 0
 
 
 class TestKosztFundamentow:
     @pytest.mark.parametrize(
         "dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica, przewidywane",
         [
-            (7.5, 5, cennik_materialow, "ziemia", True, 19523.5),
-            (7.5, 5, cennik_materialow, "ziemia", False, 9586.94),
-            (10, 8, cennik_materialow, "glina", True, 29985.83),
-            (10, 8, cennik_materialow, "glina", False, 14507.19)
-        ]
+            (7.5, 5, cennik_materialow, "ziemia", True, 19023.5),
+            (7.5, 5, cennik_materialow, "ziemia", False, 9086.94),
+            (10, 8, cennik_materialow, "glina", True, 29265.83),
+            (10, 8, cennik_materialow, "glina", False, 13787.19),
+        ],
     )
-    def test_koszt_fundamentow_poprawnie(self, dlugosc, szerokosc,
-                                         koszt_materialow, rodzaj_gleby, piwnica, przewidywane):
-        assert koszt_fundamentow(dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica) == przewidywane
+    def test_koszt_fundamentow_poprawnie(
+        self, dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica, przewidywane
+    ):
+        assert (
+            koszt_fundamentow(
+                dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica
+            )
+            == przewidywane
+        )
 
     @pytest.mark.parametrize(
         "dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica",
         [
             (-1, 5, cennik_materialow, "ziemia", True),
             (7.5, 0, cennik_materialow, "ziemia", False),
-            (10, 8, cennik_materialow, "woda", True)
-        ]
+            (10, 8, cennik_materialow, "woda", True),
+        ],
     )
-    def test_koszt_fundamentow_niepoprawnie(self, dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica):
+    def test_koszt_fundamentow_niepoprawnie(
+        self, dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica
+    ):
         with pytest.raises(ValueError):
-            koszt_fundamentow(dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica)
+            koszt_fundamentow(
+                dlugosc, szerokosc, koszt_materialow, rodzaj_gleby, piwnica
+            )
 
-
-class TestPodajDane:
-    @patch("src.dzialania.pobierz_string")
-    def test_podaj_dane_garazu_poprawnie(self, mock_input):
-        mock_input.side_effect = ["dobudowany", "2"]
-        wynik = podaj_dane_garazu()
-        assert wynik == ["dobudowany", "2"]
-
-    @patch("src.dzialania.pobierz_string")
-    def test_podaj_dane_piwnicy_poprawnie(self, mock_input):
-        mock_input.side_effect = ["użytkowa"]
-        wynik = podaj_dane_piwnicy()
-        assert wynik == ["użytkowa"]
-
-    @patch("src.dzialania.pobierz_string")
-    def test_podaj_dane_poddasza_poprawnie(self, mock_input):
-        mock_input.side_effect = ["mieszkalne"]
-        wynik = podaj_dane_poddasza()
-        assert wynik == ["mieszkalne"]
-
-    @patch("src.dzialania.pobierz_liczbe_calkowita")
-    def test_podaj_dane_drzew_poprawnie(self, mock_input):
-        mock_input.side_effect = [5]
-        wynik = podaj_dane_drzew()
-        assert wynik == 5
-
-    @patch("builtins.input")
-    def test_podaj_dane_domu_poprawnie(self, mock_input):
-        mock_input.side_effect = ["10", "8", "2", "10", "Nie", "Nie", "Nie", "standardowy"]
-        wynik = podaj_dane_domu()
-        assert wynik == [10, 8, 2, 10, False, False, False, "standardowy"]
-
-    @patch("builtins.input")
-    def test_podaj_dane_dzialki_poprawnie(self, mock_input):
-        mock_input.side_effect = ["20", "30", "Tak", "Tak", "Nie", "ziemia"]
-        wynik = podaj_dane_dzialki()
-        assert wynik == [20, 30, True, True, False, "ziemia"]
-
-    @patch("src.dzialania.pobierz_string")
-    def test_podaj_dane_plotu_poprawnie(self, mock_input):
-        mock_input.side_effect = ["drogi"]
-        wynik = podaj_dane_plotu()
-        assert wynik == "drogi"
+    def test_koszt_fundamentow_minimalne_wartosci(self):
+        wynik = koszt_fundamentow(0.1, 0.1, cennik_materialow, "ziemia", False)
+        assert wynik > 0
 
 
 class TestCzasBudowy:
     def test_czas_budowy_krotki(self):
-        dom = Dom(10, 8, 1, 10, False, False, False, "standardowy")
+        dom = Dom(6, 7, 1, 2, 5, False, False, False, "standardowy")
         dzialka = Dzialka(20, 30, True, True, False, "ziemia")
         garaz = Garaz("dobudowany", "1")
         poddasze = Poddasze("mieszkalne", dom)
         piwnica = Piwnica("użytkowa", dom)
         wynik = czas_budowy(dom, dzialka, "zwykły", 8, garaz, poddasze, piwnica)
         assert isinstance(wynik, int)
-        assert wynik == 86
+        assert wynik == 60
 
     def test_czas_budowy_dlugi(self):
-        dom = Dom(10, 8, 3, 10, True, True, True, "luksusowy")
+        dom = Dom(10, 8, 3, 15, 10, True, True, True, "luksusowy")
         dzialka = Dzialka(20, 30, False, False, True, "glina")
         garaz = Garaz("wolnostojący", "2")
         poddasze = Poddasze("mieszkalne", dom)
         piwnica = Piwnica("użytkowa", dom)
         wynik = czas_budowy(dom, dzialka, "zwykły", 8, garaz, poddasze, piwnica)
         assert isinstance(wynik, int)
-        assert wynik == 570
+        assert wynik == 2312
+
+    def test_czas_budowy_minimalny(self):
+        dom = Dom(1, 1, 1, 1, 1, False, False, False, "standardowy")
+        dzialka = Dzialka(1, 1, True, True, False, "ziemia")
+        wynik = czas_budowy(dom, dzialka, "zwykły", 0)
+        assert wynik > 0
 
 
-class TestDzialania:
-    @patch("builtins.input")
-    @patch("builtins.print")
-    def test_dzialania_exit(self, mock_print, mock_input):
-        mock_input.side_effect = ["0"]
-        uruchom()
-        mock_print.assert_any_call("Koniec programu")
+class TestKosztDomu:
+    @pytest.mark.parametrize(
+        "dlugosc, szerokosc, liczba_pieter, liczba_pokoi, ilosc_okien, garaz, piwnica, poddasze,"
+        " rodzaj, przewidywane",
+        [
+            (6, 7, 2, 3, 6, False, False, True, "standardowy", (9509.29, 1200)),
+            (10, 8, 1, 4, 7, True, True, False, "luksusowy", (6404.34, 1400)),
+        ],
+    )
+    def test_koszt_domu(
+        self,
+        dlugosc,
+        szerokosc,
+        liczba_pieter,
+        liczba_pokoi,
+        ilosc_okien,
+        garaz,
+        piwnica,
+        poddasze,
+        rodzaj,
+        przewidywane,
+    ):
+        dom = Dom(
+            dlugosc,
+            szerokosc,
+            liczba_pieter,
+            liczba_pokoi,
+            ilosc_okien,
+            garaz,
+            piwnica,
+            poddasze,
+            rodzaj,
+        )
+        assert koszt_domu(dom, cennik_materialow) == przewidywane
 
-    @patch("builtins.input")
-    @patch("builtins.print")
-    def test_dzialania_niepoprawnie(self, mock_print, mock_input):
-        mock_input.side_effect = ["999", "0"]
-        uruchom()
-        mock_print.assert_any_call("Niepoprawna opcja")
-        mock_print.assert_any_call("Koniec programu")
+    @pytest.mark.parametrize(
+        "dlugosc, szerokosc, liczba_pieter, liczba_pokoi, ilosc_okien, garaz, piwnica, poddasze,"
+        " rodzaj, rodzaj_poddasza, przewidywane",
+        [
+            (6, 7, 2, 3, 6, False, False, False, "standardowy", None, 2970.15),
+            (10, 8, 1, 4, 7, True, False, False, "standardowy", None, 5553.6),
+            (6, 7, 2, 3, 6, True, True, True, "luksusowy", "magazynowe", 4353.62),
+            (10, 8, 1, 4, 7, False, True, True, "luksusowy", "mieszkalne", 8490.58),
+        ],
+    )
+    def test_koszt_dachu(
+        self,
+        dlugosc,
+        szerokosc,
+        liczba_pieter,
+        liczba_pokoi,
+        ilosc_okien,
+        garaz,
+        piwnica,
+        poddasze,
+        rodzaj,
+        przewidywane,
+        rodzaj_poddasza,
+    ):
+        dom = Dom(
+            dlugosc,
+            szerokosc,
+            liczba_pieter,
+            liczba_pokoi,
+            ilosc_okien,
+            garaz,
+            piwnica,
+            poddasze,
+            rodzaj,
+        )
+        assert koszt_dachu(dom, cennik_materialow, rodzaj_poddasza) == przewidywane
 
-    @patch("src.dzialania.podaj_dane_domu")
-    @patch("src.dzialania.Dom")
-    @patch("builtins.input")
-    def test_dzialania_podaj_dane_domu(self, mock_input, mock_dom, mock_podaj_dane_domu):
-        mock_input.side_effect = ["1", "0"]
-        mock_podaj_dane_domu.return_value = [10, 8, 2, 10, False, False, False, "standardowy"]
-        uruchom()
-        mock_podaj_dane_domu.assert_called_once()
-        mock_dom.assert_called_once()
+    @pytest.mark.parametrize(
+        "dom_dane, dzialka_dane, plot_dane, drzewa_dane, garaz, piwnica, poddasze",
+        [
+            (
+                (6, 7, 2, 3, 6, False, False, False, "standardowy"),
+                (20, 30, True, True, False, "ziemia"),
+                "zwykły",
+                0,
+                None,
+                None,
+                None,
+            ),
+            (
+                (6, 7, 2, 3, 6, True, False, False, "standardowy"),
+                (20, 30, True, True, False, "glina"),
+                "zwykły",
+                0,
+                Garaz("dobudowany", "1"),
+                None,
+                None,
+            ),
+            (
+                (6, 7, 2, 3, 6, False, True, False, "luksusowy"),
+                (20, 30, True, True, False, "ziemia"),
+                "drogi",
+                0,
+                None,
+                Piwnica(
+                    "użytkowa", Dom(6, 7, 2, 3, 6, False, False, False, "luksusowy")
+                ),
+                None,
+            ),
+            (
+                (6, 7, 2, 3, 6, False, False, True, "standardowy"),
+                (20, 30, True, True, False, "glina"),
+                "drogi",
+                0,
+                None,
+                None,
+                Poddasze(
+                    "mieszkalne", Dom(6, 7, 2, 3, 6, False, False, False, "standardowy")
+                ),
+            ),
+            (
+                (6, 7, 2, 3, 6, True, True, True, "standardowy"),
+                (20, 30, True, True, False, "ziemia"),
+                "zwykły",
+                0,
+                Garaz("wolnostojący", "2"),
+                Piwnica(
+                    "użytkowa", Dom(6, 7, 2, 3, 6, False, False, False, "luksusowy")
+                ),
+                Poddasze(
+                    "mieszkalne", Dom(6, 7, 2, 3, 6, False, False, False, "standardowy")
+                ),
+            ),
+        ],
+    )
+    def test_koszt_calkowity(
+        self, dom_dane, dzialka_dane, plot_dane, drzewa_dane, garaz, piwnica, poddasze
+    ):
+        dom = Dom(*dom_dane)
+        dzialka = Dzialka(*dzialka_dane)
+        if garaz is not None:
+            garaz.koszt = Mock(return_value=1000)
+        if piwnica is not None:
+            piwnica.koszt = Mock(return_value=2000)
+        if poddasze is not None:
+            poddasze.koszt = Mock(return_value=3000)
+        wynik = koszt_calkowity(
+            dom, dzialka, plot_dane, drzewa_dane, garaz, piwnica, poddasze
+        )
+        assert isinstance(wynik, (int, float))
+        assert wynik > 0
+        if garaz is not None:
+            garaz.koszt.assert_called_once()
+        if piwnica is not None:
+            piwnica.koszt.assert_called_once()
+        if poddasze is not None:
+            poddasze.koszt.assert_called_once()
+
+    def test_koszt_domu_minimalny(self):
+        dom = Dom(1, 1, 1, 1, 1, False, False, False, "standardowy")
+        koszt_bloczkow, koszt_nadprozy = koszt_domu(dom, cennik_materialow)
+        assert koszt_bloczkow > 0
+        assert koszt_nadprozy > 0
+
+    @pytest.mark.parametrize(
+        "dom_dane, dzialka_dane, plot_dane, drzewa_dane, garaz, poddasze, piwnica, przewidywanie",
+        [
+            (
+                (6, 7, 1, 2, 5, False, False, False, "standardowy"),
+                (20, 30, True, True, False, "ziemia"),
+                "zwykły",
+                0,
+                None,
+                None,
+                None,
+                19200,
+            ),
+            (
+                (10, 8, 3, 15, 10, True, True, True, "luksusowy"),
+                (20, 30, False, False, True, "glina"),
+                "drogi",
+                8,
+                Garaz("wolnostojący", "2"),
+                Poddasze(
+                    "mieszkalne", Dom(10, 8, 3, 15, 10, True, True, True, "luksusowy")
+                ),
+                Piwnica(
+                    "użytkowa", Dom(10, 8, 3, 15, 10, True, True, True, "luksusowy")
+                ),
+                740480,
+            ),
+        ],
+    )
+    def test_koszt_robocizny(
+        self,
+        dom_dane,
+        dzialka_dane,
+        plot_dane,
+        drzewa_dane,
+        garaz,
+        poddasze,
+        piwnica,
+        przewidywanie,
+    ):
+        dom = Dom(*dom_dane)
+        dzialka = Dzialka(*dzialka_dane)
+        wynik = koszt_robocizny(
+            dom,
+            dzialka,
+            cennik_materialow,
+            plot_dane,
+            drzewa_dane,
+            garaz,
+            poddasze,
+            piwnica,
+        )
+        assert wynik == przewidywanie
+
+    @pytest.mark.parametrize(
+        "dom_dane, przewidywane",
+        [
+            (
+                (10, 8, 1, 4, 7, False, False, False, "standardowy"),
+                (17600.0, 14400.0, 9600.0),
+            ),
+            (
+                (10, 8, 1, 4, 7, True, True, True, "luksusowy"),
+                (26400.0, 21600.0, 14400.0),
+            ),
+        ],
+    )
+    def test_koszt_instalacji(self, dom_dane, przewidywane):
+        dom = Dom(*dom_dane)
+        wynik = koszt_instalacji(dom, cennik_materialow)
+        assert wynik == przewidywane
+
+
+class TestKosztDzialki:
+    def test_koszt_dzialka_ogrodzenie_gdy_ogrodzenie(self):
+        dzialka = Dzialka(20, 30, True, True, False, "ziemia")
+        assert dzialka.koszt_ogrodzenia("zwykły") == 0
+
+    def test_koszt_dzialka_przygotowanie_bez_drzew(self):
+        dzialka = Dzialka(20, 20, False, True, False, "ziemia")
+        wynik = dzialka.koszt_przygotowania_pod_budowe("zwykły", 0)
+        assert wynik > 0

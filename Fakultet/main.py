@@ -1,4 +1,4 @@
-import src.dzialania
+import src.menu
 
 if __name__ == "__main__":
-    src.dzialania.uruchom()
+    src.menu.menu()
