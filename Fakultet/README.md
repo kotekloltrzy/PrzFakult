@@ -13,7 +13,7 @@ Po uruchomieniu, użytkownikowi wyświetla się menu główne z którego poziomu
 
 Użytkownik wybiera którą opcję chce wybrać poprzez podanie adekwatnej do akcji liczby
 
-##Dane jakie przyjmuje dom:
+## Dane jakie przyjmuje dom:
  - długość
  - szerokość
  - liczba pięter 
@@ -25,7 +25,7 @@ Użytkownik wybiera którą opcję chce wybrać poprzez podanie adekwatnej do ak
  - poddasze
  - rodzaj
 
-##Dane jakie przyjmuje działka:
+## Dane jakie przyjmuje działka:
  - długość
  - szerokość
  - ogrodzenie
