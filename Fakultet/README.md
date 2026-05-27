@@ -10,4 +10,5 @@ Po uruchomieniu, użytkownikowi wyświetla się menu główne z którego poziomu
  - Zresetuj dane domu
  - Zresetuj dane działki
  - Wyjśćie
+
 Użytkownik wybiera którą opcję chce wybrać poprzez podanie adekwatnej do akcji liczby
